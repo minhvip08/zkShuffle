@@ -29,6 +29,7 @@ scripts/types/
 # yarn
 .pnp.*
 .yarn/install-state.gz
+.yarn/plugins
 
 # dev
 *.backup
