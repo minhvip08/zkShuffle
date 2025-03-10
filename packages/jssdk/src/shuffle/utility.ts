@@ -5,7 +5,7 @@ const https = require("https");
 
 const HOME_DIR = require("os").homedir();
 export const P0X_DIR = resolve(HOME_DIR, "./.poseidon-zkp/zkShuffle");
-export const P0X_AWS_URL = "https://p0x-labs.s3.amazonaws.com/zkShuffle/";
+export const P0X_AWS_URL = "https://f005.backblazeb2.com/file/zkshuffle/";
 export function dnld_aws(file_name: string) {
   // fs.mkdir(P0X_DIR, () => {}, { recursive: true })
   fs.mkdir(resolve(HOME_DIR, "./.poseidon-zkp"), () => {});
@@ -40,6 +40,10 @@ export function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/*
+  * download the crypto files
+  * @param cardNum 5 | 30 | 52
+  */
 export async function dnld_crypto_files(cardNum: 5 | 30 | 52) {
   try {
     let wasmFileName = "";

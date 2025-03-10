@@ -18,8 +18,8 @@ contract Storage {
     // Encryption verifier for 30 cards deck
     address _deck30EncVerifier;
 
-    // Encryption verifier for 50 cards deck
-    address _deck52EncVerifier;
+    // Encryption verifier for 36 cards deck
+    address _deck36EncVerifier;
 
     // mapping between gameId and game contract address
     mapping(uint256 => address) _activeGames;

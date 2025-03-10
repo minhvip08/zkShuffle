@@ -7,12 +7,12 @@ contract Test is ShuffleManager {
 
     constructor(
         address decryptVerifier_,
-        address deck52EncVerifier,
+        address deck36EncVerifier,
         address deck30EncVerifier,
         address deck5EncVerifier
     ) ShuffleManager (
         decryptVerifier_,
-        deck52EncVerifier,
+        deck36EncVerifier,
         deck30EncVerifier,
         deck5EncVerifier
     ) {}

@@ -18,7 +18,7 @@ async function player_run(SM: ShuffleManager, owner: SignerWithAddress, gameId: 
   } else if (numCards == 30) {
     (encrypt_wasm = resolve(P0X_DIR, "./wasm/encrypt.wasm.30")),
       (encrypt_zkey = resolve(P0X_DIR, "./zkey/encrypt.zkey.30"));
-  } else if (numCards == 52) {
+  } else if (numCards == 36) {
     (encrypt_wasm = resolve(P0X_DIR, "./wasm/encrypt.wasm")),
       (encrypt_zkey = resolve(P0X_DIR, "./zkey/encrypt.zkey"));
   }
@@ -125,7 +125,7 @@ describe("ZKShuffle E2E test", function () {
   it("Hilo E2E 30 card", async () => {
     await fullprocess(30);
   });
-  it("Hilo E2E 52 card", async () => {
-    await fullprocess(52);
+  it("Hilo E2E 36 card", async () => {
+    await fullprocess(36);
   });
 });
