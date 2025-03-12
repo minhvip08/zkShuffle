@@ -55,8 +55,8 @@ contract Hilo is IBaseGame {
             _cardConfig = DeckConfig.Deck5Card;
         } else if (numCards == 30) {
             _cardConfig = DeckConfig.Deck30Card;
-        } else if (numCards == 36) {
-            _cardConfig = DeckConfig.Deck36Card;
+        } else if (numCards == 6) {
+            _cardConfig = DeckConfig.Deck6Card;
         } else {
             require(false, "invalid numCards!");
         }

@@ -8,7 +8,7 @@ import "./BitMaps.sol";
 enum DeckConfig {
     Deck5Card,
     Deck30Card,
-    Deck36Card
+    Deck6Card
 }
 
 // Deck of cards
@@ -88,7 +88,7 @@ library zkShuffleCrypto {
         } else if (config == DeckConfig.Deck30Card) {
             size = 30;
         } else {
-            size = 36;
+            size = 6;
         }
     }
 

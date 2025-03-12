@@ -27,7 +27,7 @@ async function deployShuffleEncryptCARD5(owner: SignerWithAddress) {
 }
 
 async function deploy_shuffle_manager(owner: SignerWithAddress) {
-    const encrypt36 = await deployShuffleEncrypt(owner);
+    const encrypt6 = await deployShuffleEncrypt(owner);
     const encrypt30 = await deployShuffleEncryptCARD30(owner);
     const encrypt5 = await deployShuffleEncryptCARD5(owner);
     const decrypt = await deployDecrypt(owner);
@@ -39,7 +39,7 @@ async function deploy_shuffle_manager(owner: SignerWithAddress) {
                 zkShuffleCrypto: crypto.address,
             },
         })
-    ).deploy(decrypt.address, encrypt36.address, encrypt30.address, encrypt5.address);
+    ).deploy(decrypt.address, encrypt6.address, encrypt30.address, encrypt5.address);
     return ShuffleManager__factory.connect(sm.address, owner);
 }
 

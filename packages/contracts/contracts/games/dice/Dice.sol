@@ -34,7 +34,7 @@ contract Dice is IBaseGame {
 
     constructor(IShuffleStateManager _ishuffle) {
         ishuffle = _ishuffle;
-        _cardConfig = DeckConfig.Deck36Card;
+        _cardConfig = DeckConfig.Deck6Card;
     }
 
     function newGame(uint gameId) external {
@@ -66,54 +66,24 @@ contract Dice is IBaseGame {
     ) external onlyShuffleManager {
         BitMaps.BitMap256 memory cards;
         cards._data = 1;    // ...0001
-        bytes memory next = abi.encodeWithSelector(this.dealCard1ToPlayer1.selector, gameId);
-        ishuffle.dealCardsTo(
-            shuffleGameIds[gameId],
-            cards,
-            0,
-            next
-        );
-    }
-
-    // Deal the 1st card to player 1 and specify the next state:
-    // openCard0
-    function dealCard1ToPlayer1(
-        uint gameId
-    ) external onlyShuffleManager {
-        BitMaps.BitMap256 memory cards;
-        cards._data = 2;    // ...0010
         bytes memory next = abi.encodeWithSelector(this.openCard0.selector, gameId);
         ishuffle.dealCardsTo(
             shuffleGameIds[gameId],
             cards,
-            1,
+            0,
             next
         );
     }
 
     // Open Card 0 and specify the next state:
-    // openCard1
+    // endGame
     function openCard0(
-        uint gameId
-    ) external onlyShuffleManager {
-        bytes memory next = abi.encodeWithSelector(this.openCard1.selector, gameId);
-        ishuffle.openCards(
-            shuffleGameIds[gameId],
-            0,
-            1,
-            next
-        );
-    }
-
-    // Open the Card 1 and specify the next state:
-    // openCard1
-    function openCard1(
         uint gameId
     ) external onlyShuffleManager {
         bytes memory next = abi.encodeWithSelector(this.endGame.selector, gameId);
         ishuffle.openCards(
             shuffleGameIds[gameId],
-            1,
+            0,
             1,
             next
         );

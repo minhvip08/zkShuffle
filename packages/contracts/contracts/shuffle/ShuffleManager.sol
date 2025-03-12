@@ -50,11 +50,11 @@ contract ShuffleManager is IShuffleStateManager, Storage, Ownable {
 
     constructor(
         address decryptVerifier_,
-        address deck36EncVerifier,
+        address deck6EncVerifier,
         address deck30EncVerifier,
         address deck5EncVerifier
     ) {
-        _deck36EncVerifier = deck36EncVerifier;
+        _deck36EncVerifier = deck6EncVerifier;
         _deck30EncVerifier = deck30EncVerifier;
         _deck5EncVerifier = deck5EncVerifier;
         decryptVerifier = IDecryptVerifier(decryptVerifier_);
@@ -187,13 +187,13 @@ contract ShuffleManager is IShuffleStateManager, Storage, Ownable {
             gameInfos[newGameId].numCards = 30;
             state.deck.config = DeckConfig.Deck30Card;
         } else if (
-            IBaseGame(msg.sender).cardConfig() == DeckConfig.Deck36Card
+            IBaseGame(msg.sender).cardConfig() == DeckConfig.Deck6Card
         ) {
             gameInfos[newGameId].encryptVerifier = IShuffleEncryptVerifier(
                 _deck36EncVerifier
             );
-            gameInfos[newGameId].numCards = 36;
-            state.deck.config = DeckConfig.Deck36Card;
+            gameInfos[newGameId].numCards = 6;
+            state.deck.config = DeckConfig.Deck6Card;
         } else {
             revert("Unsupported size of deck.");
         }
