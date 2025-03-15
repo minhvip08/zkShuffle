@@ -44,11 +44,14 @@ async function deploy_shuffle_manager(owner: SignerWithAddress) {
 }
 
 async function main() {
-    const [owner] = await ethers.getSigners();
-    const shuffleManager = await deploy_shuffle_manager(owner);
+    const players = await ethers.getSigners();
+    const shuffleManager = await deploy_shuffle_manager(players[0]);
     console.log(`ShuffleManager deployed to: ${shuffleManager.address}`);
-    const game = await new Dice__factory(owner).deploy(shuffleManager.address);
+    const game = await new Dice__factory(players[0]).deploy(shuffleManager.address);
     console.log(`Dice deployed to: ${game.address}`);
+
     // TODO: Listen to events
-    // listen (IPC or HTTP) from the backend  
+    // listen (IPC or HTTP) from the backend 
 }
+
+main();
