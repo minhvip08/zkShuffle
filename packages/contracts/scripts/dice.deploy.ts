@@ -49,6 +49,9 @@ async function main() {
     console.log(`ShuffleManager deployed to: ${shuffleManager.address}`);
     const game = await new Dice__factory(players[0]).deploy(shuffleManager.address);
     console.log(`Dice deployed to: ${game.address}`);
+    while (true) {
+      
+    }
 
     // TODO: Listen to events
     // listen (IPC or HTTP) from the backend 
