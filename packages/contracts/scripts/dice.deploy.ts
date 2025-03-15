@@ -1,5 +1,9 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ethers } from "hardhat";
+import { v4 as uuidv4 } from "uuid"; // Tạo clientId duy 
+import WebSocket from "ws";
+import dotenv from "dotenv";
+dotenv.config();
 import {
   DecryptVerifier__factory,
   Dice__factory,
@@ -7,6 +11,54 @@ import {
   Shuffle_encryptVerifier__factory,
   ShuffleManager__factory
 } from "../types";
+
+const wss = new WebSocket.Server({ port: parseInt(process.env.WSS_PORT || "3000") });
+console.log("WebSocket Server running on PORT:", process.env.WSS_PORT);
+
+const clients = new Map<string, WebSocket>();
+
+wss.on("connection", (ws, request) => {
+  console.log("WebSocket Client Connected:",request.headers["currentroomid"]);
+  const clientId = request.headers["currentroomid"] as string || uuidv4();
+  console.log("WebSocket Client Connected with clientId:", clientId);
+  clients.set(clientId, ws);
+
+  ws.send(JSON.stringify({ event: "CONNECTED", clientId }));
+
+
+  ws.on("message", async (data) => {
+    const message = JSON.parse(data.toString());
+    console.log("Received WebSocket Message:", message);
+
+    // Demo: Roll Dice
+    if (message.action === "ROLL_DICE") {
+
+      const diceResult = Math.floor(Math.random() * 6) + 1;
+      console.log(`Dice rolled: ${diceResult} for Client ${message.clientId}`);
+
+      const clientWs = clients.get(message.clientId);
+      if (clientWs && clientWs.readyState === WebSocket.OPEN) {
+        clientWs.send(JSON.stringify({
+          event: "DICE_ROLLED",
+          clientId: message.clientId,
+          result: diceResult,
+          requestId: message.requestId
+        }));
+        console.log(`Sent response to Client ${message.clientId}`);
+      } else {
+        console.warn(`Client ${message.clientId} is not connected`);
+      }
+
+    }
+  });
+
+  ws.on("close", () => {
+    console.log(" WebSocket Client Disconnected");
+  });
+});
+
+
+
 
 // Depploys contract for decryption.
 async function deployDecrypt(owner: SignerWithAddress) {
@@ -49,9 +101,7 @@ async function main() {
     console.log(`ShuffleManager deployed to: ${shuffleManager.address}`);
     const game = await new Dice__factory(players[0]).deploy(shuffleManager.address);
     console.log(`Dice deployed to: ${game.address}`);
-    while (true) {
-      
-    }
+
 
     // TODO: Listen to events
     // listen (IPC or HTTP) from the backend 
