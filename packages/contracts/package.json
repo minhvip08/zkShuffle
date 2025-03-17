@@ -43,7 +43,7 @@
     "test": "hardhat test tests/*.ts",
     "pub2npmjs": "npm publish --access=public",
     "setup": "hardhat node",
-    "deploy:dice": "hardhat run scripts/dice.deploy.ts --network localhost",
+    "deploy:dice": "hardhat run scripts/dice.run.ts --network localhost",
     "dice": "ts-node scripts/dice.ts",
     "contract-size": "hardhat size-contracts",
     "doc": "hardhat docgen"

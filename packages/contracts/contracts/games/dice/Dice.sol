@@ -16,7 +16,7 @@ contract Dice is IBaseGame {
     }
 
     // check whether the caller is the game owner
-    modifier onlyGameOwner(uint gameId) {
+    modifier onlyGameOwner(string memory gameId) {
         require(gameOwners[gameId] == msg.sender, "caller is not game owner.");
         _;
     }
@@ -27,24 +27,29 @@ contract Dice is IBaseGame {
 
     // a mapping between Dice's gameId
     // to the "global" gameId returned by ShuffleManager
-    mapping(uint => uint) shuffleGameIds;
+    mapping(string => uint256) public shuffleGameIds;
 
     // a mapping between Dice's gameId and game owners
-    mapping(uint => address) gameOwners;
+    mapping(string => address) public gameOwners;
 
     constructor(IShuffleStateManager _ishuffle) {
         ishuffle = _ishuffle;
         _cardConfig = DeckConfig.Deck6Card;
     }
 
-    function newGame(uint gameId) external {
-        uint shuffleGameId = ishuffle.createShuffleGame(2);
+    function newGame(string memory gameId) external returns (uint256) {
+        uint256 shuffleGameId = ishuffle.createShuffleGame(2);
         gameOwners[gameId] = msg.sender;
         shuffleGameIds[gameId] = shuffleGameId;
     }
 
+    // Get shuffleGameId by gameId
+    function getShuffleGameId(string memory gameId) external view returns (uint256) {
+        return shuffleGameIds[gameId];
+    }
+
     function allowJoinGame(
-        uint gameId
+        string memory gameId
     ) external onlyGameOwner(gameId) {
         bytes memory next = abi.encodeWithSelector(this.moveToShuffleStage.selector, gameId);
         ishuffle.register(shuffleGameIds[gameId], next);
@@ -53,7 +58,7 @@ contract Dice is IBaseGame {
     // Allow players to shuffle the deck, and specify the next state:
     // dealCard0ToPlayer0
     function moveToShuffleStage(
-        uint gameId
+        string memory gameId
     ) external onlyShuffleManager {
         bytes memory next = abi.encodeWithSelector(this.dealCard0ToPlayer0.selector, gameId);
         ishuffle.shuffle(shuffleGameIds[gameId], next);
@@ -62,7 +67,7 @@ contract Dice is IBaseGame {
     // Deal the 0th card to player 0 and specify the next state:
     // dealCard1ToPlayer1
     function dealCard0ToPlayer0(
-        uint gameId
+        string memory gameId
     ) external onlyShuffleManager {
         BitMaps.BitMap256 memory cards;
         cards._data = 1;    // ...0001
@@ -78,7 +83,7 @@ contract Dice is IBaseGame {
     // Open Card 0 and specify the next state:
     // endGame
     function openCard0(
-        uint gameId
+        string memory gameId
     ) external onlyShuffleManager {
         bytes memory next = abi.encodeWithSelector(this.endGame.selector, gameId);
         ishuffle.openCards(
@@ -91,9 +96,10 @@ contract Dice is IBaseGame {
 
     // End the game, GG!
     function endGame(
-        uint gameId
+        string memory gameId
     ) external onlyShuffleManager {
         // game-specific cleanup
-        ishuffle.endGame(gameId);
+
+        ishuffle.endGame(shuffleGameIds[gameId]);
     }
 }
