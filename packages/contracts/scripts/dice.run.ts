@@ -7,7 +7,7 @@ import { deploy_shuffle_manager } from "./dice.deploy";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { dnld_aws, P0X_DIR, sleep } from "@zk-shuffle/jssdk/src/shuffle/utility";
 import { resolve } from "path";
-import { GameTurn, ZKShuffle } from "@zk-shuffle/jssdk/src/shuffle/zkShuffle";
+import { GameTurn, ZKShuffle } from "@zk-shuffle/jssdk";
 
 dotenv.config();
 
@@ -50,7 +50,11 @@ class GameService {
         }
     }
 
-    public async player_run(SM: ShuffleManager, owner: SignerWithAddress, gameId: number) {
+    public async player_run(owner: SignerWithAddress, gameId: number) {
+        if (!this.shuffleManager) {
+            throw new Error("ShuffleManager is not initialized");
+        }
+
         console.log("Player ", owner.address.slice(0, 6).concat("..."), "init shuffle context!");
         let encrypt_wasm;
         let encrypt_zkey;
@@ -59,7 +63,7 @@ class GameService {
         encrypt_zkey = resolve(P0X_DIR, "./zkey/encrypt.zkey");
 
         const player = await ZKShuffle.create(
-            SM.address,
+            this.shuffleManager.address,
             owner,
             await ZKShuffle.generateShuffleSecret(),
             resolve(P0X_DIR, "./wasm/decrypt.wasm"),
@@ -67,8 +71,7 @@ class GameService {
             encrypt_wasm,
             encrypt_zkey,
         );
-
-        // join Game
+    
         let playerIdx = await player.joinGame(gameId);
         console.log(
             "Player ",
@@ -80,10 +83,10 @@ class GameService {
         );
 
         // play game
-        let turn = GameTurn.NOP;
-        let revealedCard: any = null;
+        let turn: GameTurn = GameTurn.NOP;
+        let revealedCard: number | null = null;
 
-        while (turn != GameTurn.Complete) {
+        while (turn !== GameTurn.Complete) {
             turn = await player.checkTurn(gameId);
             //console.log("player ", playerIdx, " state : ", state, " nextBlock ", nextBlock)
             if (turn != GameTurn.NOP) {
@@ -122,7 +125,7 @@ class GameService {
         try {
             if (this.shuffleGame && this.players) {
                 await (await this.shuffleGame.connect(this.players[0]).newGame(clientId)).wait();
-                const gameId = (await this.shuffleGame.connect(this.players[0]).getShuffleGameId(clientId));
+                const gameId = (await this.shuffleGame.connect(this.players[0]).getShuffleGameId(clientId)).toNumber();
 
                 console.log(
                     "Player ",
@@ -134,14 +137,13 @@ class GameService {
                 await (await this.shuffleGame.connect(this.players[0]).allowJoinGame(clientId)).wait();
                 if (this.shuffleManager) {
                     
-                    
-                    const [playercard1, playercard2] = await Promise.all([this.player_run(this.shuffleManager, this.players[0], gameId.toNumber()), this.player_run(this.shuffleManager, this.players[1], gameId.toNumber())]);
+                    const [playercard0, playercard1] = await Promise.all([this.player_run(this.players[0], gameId), this.player_run(this.players[1], gameId)]);
+                    console.log("Player 0 revealed card: ", playercard0);
                     console.log("Player 1 revealed card: ", playercard1);
-                    console.log("Player 2 revealed card: ", playercard2);
-                    if (playercard1) {
-                        return playercard1;
+                    if (playercard0) {
+                        return playercard0;
                     } else {
-                        return playercard2;
+                        return playercard1;
                     }
                 } else {
                     throw new Error("ShuffleManager is not initialized");
@@ -152,6 +154,7 @@ class GameService {
             }
         } catch (error) {
             console.error("Error starting new game:", error);
+            return null;
         }
     }
 }
@@ -192,7 +195,7 @@ async function handleDiceRoll(message: any) {
     try {
         const gameService = GameService.getInstance();
         const result = await gameService.rollDice(message.clientId);
-        if (result > 0){
+        if (result !== null) {
             console.log(`Dice rolled: ${result} for Client ${message.clientId}`);
             const clientWs = clients.get(message.clientId);
             if (clientWs && clientWs.readyState === WebSocket.OPEN) {

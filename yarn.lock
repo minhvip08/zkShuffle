@@ -1718,6 +1718,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/uuid@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "@types/uuid@npm:10.0.0"
+  checksum: e3958f8b0fe551c86c14431f5940c3470127293280830684154b91dc7eb3514aeb79fe3216968833cf79d4d1c67f580f054b5be2cd562bebf4f728913e73e944
+  languageName: node
+  linkType: hard
+
+"@types/ws@npm:^8.18.0":
+  version: 8.18.0
+  resolution: "@types/ws@npm:8.18.0"
+  dependencies:
+    "@types/node": "*"
+  checksum: 517b97e6d5603902d547b2287cbeebc741303948fd356a81e0322b60aa763dfec5792b6674a8c51b95923a58f3664b9a1ba4c1b4379b07ddd638f52fda031e3d
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/eslint-plugin@npm:^5.59.8":
   version: 5.59.9
   resolution: "@typescript-eslint/eslint-plugin@npm:5.59.9"
@@ -1917,6 +1933,8 @@ __metadata:
     "@types/chai": ^4.3.4
     "@types/mocha": ^10.0.0
     "@types/node": ^18.11.9
+    "@types/uuid": ^10.0.0
+    "@types/ws": ^8.18.0
     "@zk-shuffle/circuits": 1.0.0
     "@zk-shuffle/jssdk": 1.0.0
     "@zk-shuffle/proof": 1.0.0
