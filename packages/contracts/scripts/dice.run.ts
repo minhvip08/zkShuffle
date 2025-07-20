@@ -51,7 +51,7 @@ class GameService {
         }
     }
 
-    public async rollDice(clientId: string) {
+    public async initShuffle(clientId: string) {
         try {
             if (this.shuffleGame && this.players) {
                 await (await this.shuffleGame.connect(this.players[0]).newGame(clientId)).wait();
@@ -65,6 +65,7 @@ class GameService {
                 );
 
                 await (await this.shuffleGame.connect(this.players[0]).allowJoinGame(clientId)).wait();
+                return gameId;
                 // if (this.shuffleManager) {
                     
                 //     // const [playercard0, playercard1] = await Promise.all([this.player_run(this.players[0], gameId), this.player_run(this.players[1], gameId)]);
@@ -124,24 +125,41 @@ function setupWebSocketServer() {
 async function handleDiceRoll(message: any) {
     try {
         const gameService = GameService.getInstance();
-        const result = await gameService.rollDice(message.clientId);
-        if (result !== null) {
-            console.log(`Dice rolled: ${result} for Client ${message.clientId}`);
+        const gameId = await gameService.initShuffle(message.clientId);
+
+        if (gameId !== null) {
+            console.log(`Dice rolled for Client ${message.clientId} in Game ${gameId}`);
             const clientWs = clients.get(message.clientId);
             if (clientWs && clientWs.readyState === WebSocket.OPEN) {
                 clientWs.send(
                     JSON.stringify({
-                        event: "DICE_ROLLED",
-                        clientId: message.clientId,
-                        result: result,
+                        event: "CREATE_SHUFFLE_GAME_ID",
+                        gameId: gameId,
                         requestId: message.requestId,
                     })
                 );
                 console.log(`Sent response to Client ${message.clientId}`);
-            } else {
-                console.warn(`Client ${message.clientId} is not connected`);
             }
         }
+
+        // const result = await gameService.initShuffle(message.clientId);
+        // if (result !== null) {
+        //     console.log(`Dice rolled: ${result} for Client ${message.clientId}`);
+        //     const clientWs = clients.get(message.clientId);
+        //     if (clientWs && clientWs.readyState === WebSocket.OPEN) {
+        //         clientWs.send(
+        //             JSON.stringify({
+        //                 event: "DICE_ROLLED",
+        //                 clientId: message.clientId,
+        //                 result: result,
+        //                 requestId: message.requestId,
+        //             })
+        //         );
+        //         console.log(`Sent response to Client ${message.clientId}`);
+        //     } else {
+        //         console.warn(`Client ${message.clientId} is not connected`);
+        //     }
+        // }
         
     } catch (error) {
         console.error("Error handling dice roll:", error);
