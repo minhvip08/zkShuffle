@@ -4,6 +4,7 @@ import { ethers } from "hardhat";
 import { Dice__factory, Dice, ShuffleManager } from "../types";
 import { deploy_shuffle_manager } from "./dice.deploy";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { v4 as uuidv4 } from 'uuid';
 // import { dnld_aws, P0X_DIR, sleep } from "@zk-shuffle/jssdk/src/shuffle/utility";
 // import { resolve } from "path";
 // import { GameTurn, ZKShuffle } from "@zk-shuffle/jssdk";
@@ -58,7 +59,7 @@ class GameService {
 
                 console.log(
                     "Player ",
-                    this.players[0].address.slice(0, 6).concat("..."),
+                    this.players[0].address,
                     "Create Game ",
                     clientId,
                 );
@@ -88,66 +89,66 @@ class GameService {
     }
 }
 
-// function setupWebSocketServer() {
-//     wss.on("connection", (ws, request) => {
-//         const clientId = (request.headers["currentroomid"] as string) || uuidv4();
-//         console.log(`Client Connected: ${clientId}`);
-//         clients.set(clientId, ws);
+function setupWebSocketServer() {
+    wss.on("connection", (ws, request) => {
+        const clientId = (request.headers["currentroomid"] as string) || uuidv4();
+        console.log(`Client Connected: ${clientId}`);
+        clients.set(clientId, ws);
 
-//         ws.send(JSON.stringify({ event: "CONNECTED", clientId }));
+        ws.send(JSON.stringify({ event: "CONNECTED", clientId }));
 
-//         ws.on("message", async (data) => {
-//             try {
-//                 const message = JSON.parse(data.toString());
-//                 console.log("Received WebSocket Message:", message);
+        ws.on("message", async (data) => {
+            try {
+                const message = JSON.parse(data.toString());
+                console.log("Received WebSocket Message:", message);
 
-//                 if (message.action === "ROLL_DICE") {
-//                     await handleDiceRoll(message);
-//                 }
-//             } catch (error) {
-//                 console.error("Error processing WebSocket message:", error);
-//             }
-//         });
+                if (message.action === "ROLL_DICE") {
+                    await handleDiceRoll(message);
+                }
+            } catch (error) {
+                console.error("Error processing WebSocket message:", error);
+            }
+        });
 
-//         ws.on("close", () => {
-//             console.log(`Client ${clientId} disconnected`);
-//             clients.delete(clientId);
-//         });
+        ws.on("close", () => {
+            console.log(`Client ${clientId} disconnected`);
+            clients.delete(clientId);
+        });
 
-//         ws.on("error", (error) => {
-//             console.error(`WebSocket Error for client ${clientId}:`, error);
-//         });
-//     });
-// }
+        ws.on("error", (error) => {
+            console.error(`WebSocket Error for client ${clientId}:`, error);
+        });
+    });
+}
 
-// async function handleDiceRoll(message: any) {
-//     try {
-//         const gameService = GameService.getInstance();
-//         const result = await gameService.rollDice(message.clientId);
-//         if (result !== null) {
-//             console.log(`Dice rolled: ${result} for Client ${message.clientId}`);
-//             const clientWs = clients.get(message.clientId);
-//             if (clientWs && clientWs.readyState === WebSocket.OPEN) {
-//                 clientWs.send(
-//                     JSON.stringify({
-//                         event: "DICE_ROLLED",
-//                         clientId: message.clientId,
-//                         result: result,
-//                         requestId: message.requestId,
-//                     })
-//                 );
-//                 console.log(`Sent response to Client ${message.clientId}`);
-//             } else {
-//                 console.warn(`Client ${message.clientId} is not connected`);
-//             }
-//         }
+async function handleDiceRoll(message: any) {
+    try {
+        const gameService = GameService.getInstance();
+        const result = await gameService.rollDice(message.clientId);
+        if (result !== null) {
+            console.log(`Dice rolled: ${result} for Client ${message.clientId}`);
+            const clientWs = clients.get(message.clientId);
+            if (clientWs && clientWs.readyState === WebSocket.OPEN) {
+                clientWs.send(
+                    JSON.stringify({
+                        event: "DICE_ROLLED",
+                        clientId: message.clientId,
+                        result: result,
+                        requestId: message.requestId,
+                    })
+                );
+                console.log(`Sent response to Client ${message.clientId}`);
+            } else {
+                console.warn(`Client ${message.clientId} is not connected`);
+            }
+        }
         
-//     } catch (error) {
-//         console.error("Error handling dice roll:", error);
-//     }
-// }
+    } catch (error) {
+        console.error("Error handling dice roll:", error);
+    }
+}
 
-// setupWebSocketServer();
+setupWebSocketServer();
 
 const gameService = GameService.getInstance();
 gameService.initializeContracts();
