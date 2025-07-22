@@ -37,8 +37,8 @@ contract Dice is IBaseGame {
         _cardConfig = DeckConfig.Deck6Card;
     }
 
-    function newGame(string memory gameId) external returns (uint256) {
-        uint256 shuffleGameId = ishuffle.createShuffleGame(2);
+    function newGame(string memory gameId, uint8 numPlayers) external returns (uint256) {
+        uint256 shuffleGameId = ishuffle.createShuffleGame(numPlayers);
         gameOwners[gameId] = msg.sender;
         shuffleGameIds[gameId] = shuffleGameId;
     }
@@ -65,7 +65,7 @@ contract Dice is IBaseGame {
     }
 
     // Deal the 0th card to player 0 and specify the next state:
-    // dealCard1ToPlayer1
+    // openCard0
     function dealCard0ToPlayer0(
         string memory gameId
     ) external onlyShuffleManager {

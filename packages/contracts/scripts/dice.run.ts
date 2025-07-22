@@ -61,7 +61,7 @@ class GameService {
     public async initShuffle(clientId: string) {
         try {
             if (this.shuffleGame && this.players) {
-                await (await this.shuffleGame.connect(this.players[0]).newGame(clientId)).wait();
+                await (await this.shuffleGame.connect(this.players[0]).newGame(clientId, 3)).wait();
                 const gameId = (await this.shuffleGame.connect(this.players[0]).getShuffleGameId(clientId)).toNumber();
 
                 console.log(
@@ -132,6 +132,7 @@ class GameService {
                         revealedCard = cards[0];
                     break;
                     case GameTurn.Complete:
+                        console.timeEnd(`total_${gameId}`);
                         console.log("Player ", playerIdx, " 's Game End!");
                         break;
                     default:
@@ -184,6 +185,7 @@ async function handleDiceRoll(message: any) {
         if (gameId !== null) {
             console.log(`Dice rolled for Client ${message.clientId} in Game ${gameId}`);
             const clientWs = clients.get(message.clientId);
+            console.time(`total_${gameId}`);
             gameService.playerRun(gameId);
             if (clientWs && clientWs.readyState === WebSocket.OPEN) {
                 clientWs.send(
