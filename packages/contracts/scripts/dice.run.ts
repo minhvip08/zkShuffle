@@ -1,3 +1,4 @@
+import { homedir } from "os";
 import WebSocket from "ws";
 import dotenv from "dotenv";
 import { ethers } from "hardhat";
@@ -6,8 +7,10 @@ import { deploy_shuffle_manager } from "./dice.deploy";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { v4 as uuidv4 } from 'uuid';
 import { P0X_DIR, sleep } from "@zk-shuffle/jssdk/src/shuffle/utility";
-import { resolve } from "path";
+import path, { resolve } from "path";
 import { GameTurn, ZKShuffle } from "@zk-shuffle/jssdk";
+import { mkdirSync } from "fs";
+import { writeFile } from "fs/promises";
 
 dotenv.config();
 
@@ -26,8 +29,12 @@ class GameService {
     private shuffleManager: ShuffleManager | undefined;
     private shuffleGame: Dice | undefined;
     private players: SignerWithAddress[] | undefined;
+    private zkshuffleDir: string;
 
-    private constructor() {}
+    private constructor() {
+        this.zkshuffleDir = path.join(homedir(), ".zkshuffle");
+        mkdirSync(this.zkshuffleDir, { recursive: true });
+    }
 
     public static getInstance(): GameService {
         if (!GameService.instance) {
@@ -42,7 +49,7 @@ class GameService {
             this.players = await ethers.getSigners();
             this.shuffleManager = await deploy_shuffle_manager(this.players[0]);
             console.log(`ShuffleManager deployed at: ${this.shuffleManager.address}`);
-
+            await writeFile(path.join(this.zkshuffleDir, "shuffle_manager_contract.txt"), this.shuffleManager.address)
             this.shuffleGame = await new Dice__factory(this.players[0]).deploy(
                 this.shuffleManager.address,
             );
@@ -107,29 +114,29 @@ class GameService {
             turn = await player.checkTurn(gameId);
 
             if (turn != GameTurn.NOP) {
-            switch (turn) {
-                case GameTurn.Shuffle:
-                console.log("Player ", playerIdx, " 's Shuffle turn!");
-                await player.shuffle(gameId);
-                break;
-                case GameTurn.Deal:
-                console.log("Player ", playerIdx, " 's Deal Decrypt turn!");
-                await player.draw(gameId);
-                break;
-                case GameTurn.Open:
-                console.log("Player ", playerIdx, " 's Open Decrypt turn!");
-                let cards = await player.openOffchain(gameId, [playerIdx]);
-                console.log("Player ", playerIdx, " open offchain hand card ", cards[0]);
-                cards = await player.open(gameId, [playerIdx]);
-                console.log("Player ", playerIdx, " open onchain hand card ", cards[0]);
-                revealedCard = cards[0];
-                break;
-                case GameTurn.Complete:
-                console.log("Player ", playerIdx, " 's Game End!");
-                break;
-                default:
-                console.log("err turn ", turn);
-            }
+                switch (turn) {
+                    case GameTurn.Shuffle:
+                        console.log("Player ", playerIdx, " 's Shuffle turn!");
+                        await player.shuffle(gameId);
+                        break;
+                    case GameTurn.Deal:
+                        console.log("Player ", playerIdx, " 's Deal Decrypt turn!");
+                        await player.draw(gameId);
+                        break;
+                    case GameTurn.Open:
+                        console.log("Player ", playerIdx, " 's Open Decrypt turn!");
+                        let cards = await player.openOffchain(gameId, [playerIdx]);
+                        console.log("Player ", playerIdx, " open offchain hand card ", cards[0]);
+                        cards = await player.open(gameId, [playerIdx]);
+                        console.log("Player ", playerIdx, " open onchain hand card ", cards[0]);
+                        revealedCard = cards[0];
+                    break;
+                    case GameTurn.Complete:
+                        console.log("Player ", playerIdx, " 's Game End!");
+                        break;
+                    default:
+                        console.log("err turn ", turn);
+                }
             } 
             await sleep(1000);
         }  
@@ -177,6 +184,7 @@ async function handleDiceRoll(message: any) {
         if (gameId !== null) {
             console.log(`Dice rolled for Client ${message.clientId} in Game ${gameId}`);
             const clientWs = clients.get(message.clientId);
+            gameService.playerRun(gameId);
             if (clientWs && clientWs.readyState === WebSocket.OPEN) {
                 clientWs.send(
                     JSON.stringify({
@@ -186,7 +194,6 @@ async function handleDiceRoll(message: any) {
                     })
                 );
                 console.log(`Sent response to Client ${message.clientId}`);
-                gameService.playerRun(gameId)
             }
         }
 
