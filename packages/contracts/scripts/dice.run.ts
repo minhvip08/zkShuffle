@@ -14,6 +14,13 @@ import { writeFile } from "fs/promises";
 
 dotenv.config();
 
+interface RequestMessage {
+    action: string;
+    numberOfPlayers: number;
+    clientId: string;
+    requestId: string;
+}
+
 const PORT = parseInt(process.env.WSS_PORT || "3000");
 const wss = new WebSocket.Server({ port: PORT });
 
@@ -58,10 +65,10 @@ class GameService {
         }
     }
 
-    public async initShuffle(clientId: string) {
+    public async initShuffle(clientId: string, numberOfPlayers: number) {
         try {
             if (this.shuffleGame && this.players) {
-                await (await this.shuffleGame.connect(this.players[0]).newGame(clientId, 3)).wait();
+                await (await this.shuffleGame.connect(this.players[0]).newGame(clientId, numberOfPlayers)).wait();
                 const gameId = (await this.shuffleGame.connect(this.players[0]).getShuffleGameId(clientId)).toNumber();
 
                 console.log(
@@ -177,16 +184,15 @@ function setupWebSocketServer() {
     });
 }
 
-async function handleDiceRoll(message: any) {
+async function handleDiceRoll(message: RequestMessage) {
     try {
         const gameService = GameService.getInstance();
-        const gameId = await gameService.initShuffle(message.clientId);
+        const gameId = await gameService.initShuffle(message.clientId, message.numberOfPlayers);
 
         if (gameId !== null) {
             console.log(`Dice rolled for Client ${message.clientId} in Game ${gameId}`);
             const clientWs = clients.get(message.clientId);
             console.time(`total_${gameId}`);
-            gameService.playerRun(gameId);
             if (clientWs && clientWs.readyState === WebSocket.OPEN) {
                 clientWs.send(
                     JSON.stringify({
@@ -196,6 +202,18 @@ async function handleDiceRoll(message: any) {
                     })
                 );
                 console.log(`Sent response to Client ${message.clientId}`);
+                const result = await gameService.playerRun(gameId);
+                if (result !== null) {
+                    clientWs.send(
+                        JSON.stringify({
+                            event: "RESULT_DICE_ROLLED",
+                            result: result,
+                        })
+                    );
+                    console.log(`Sent dice roll result to Client ${message.clientId}`);
+                } else {
+                    console.error(`Failed to roll dice for Client ${message.clientId}`);
+                }
             }
         }
 
