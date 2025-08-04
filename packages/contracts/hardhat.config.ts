@@ -54,6 +54,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
+      gas: 1000000000000,
     },
   },
   mocha: {
